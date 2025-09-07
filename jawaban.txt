@@ -181,14 +181,6 @@ Solusi: selalu propagasi context.Context, tutup channel dari produser, gunakan s
 Masalah: request ke DB/HTTP kadang menggantung.
 Solusi: standar-kan timeout di boundary I/O, gunakan circuit breaker / retry with backoff.
 
-- Data race / akses paralel
-Masalah: variabel bersama diakses dari banyak goroutine.
-Solusi: lindungi dengan sync.Mutex, atau ubah desain ke message passing (channel), aktifkan -race saat test.
-
-- GORM (zero value, preload, soft delete)
-Masalah: kolom zero-value tak di-update, preload relasi lupa, soft-delete tak disadari.
-Solusi: pakai Select/Omit/Updates(map), cek gorm.DeletedAt, pakai Preload
-
 
 Coding test 1
 Jawaban : ada di folder coding-test-1
