@@ -1,0 +1,197 @@
+No 1
+Jawaban : 
+Berdasaarakan pengalaman saya selama bekerja saya menggunakan framework berikut
+Framework Rest API:
+ 1. Gin, Echo, Fiber, Gorilla Mux
+    - Performa tinggi (lebih cepat dari Echo/Gorilla Mux dalam banyak benchmark)
+    - Banyak digunakan di industri → komunitas besar, dokumentasi lengkap
+    - Middleware bawaan (CORS, Logger, Recovery, dll)
+
+    kegunaan : 
+    - Aplikasi web
+    - backend System
+    - microservices
+
+    (GRPC golang)
+    kegunaan :
+    - microservices yang kompleks
+    - Lebih cepat & efisien dibanding REST (pakai Protobuf, bukan JSON)
+    - Strongly typed (definisi service & message pakai .proto)
+    - Mendukung streaming (client streaming, server streaming, bidirectional)
+
+2. Framework database (GORM)
+    - ORM (Object Relational Mapper) untuk database SQL (Postgres, MySQL, SQLite, dll).
+    - Cocok untuk CRUD, relasi tabel, dan migrasi database.
+    kegunaan : menyimpan ke database agar lebih mudah dan ringkas
+
+3. Framework Testing
+    (Testify)
+    - Framework testing untuk unit test & integration test
+    - Cocok untuk semua jenis project (API, microservices, worker)
+
+No 2
+Jawaban : 
+Concurrency ->  kemampuan program untuk mengatur beberapa tugas yang berjalan secara independen, seolah-olah berjalan bersamaan.
+                Di Go, concurrency bukan paralelisme, tapi bisa menghasilkan paralelisme kalau dijalankan di banyak core CPU.
+
+Perbedaan Concurrency dan Parallelism :
+Concurrency → mengelola banyak pekerjaan sekaligus (misalnya menunggu API, baca file, query DB).
+Parallelism → benar-benar menjalankan banyak pekerjaan di CPU core berbeda pada waktu bersamaan.
+
+Fitur Concurrency di Golang
+- Goroutine
+- Channel
+- Select
+- WaitGroup (sync.WaitGroup)
+- Mutex (sync.Mutex)
+
+No 3 
+Jawaban : ada di folder code waitgroup
+
+No 4
+Jawaban :
+Goroutine adalah unit eksekusi ringan yang dikelola oleh Go runtime untuk menjalankan fungsi secara concurrent. Berbeda dengan thread, goroutine jauh lebih ringan dan bisa dibuat dalam jumlah ribuan tanpa membebani sistem.
+Saya pernah memakainya dalam project microservices berbasis gRPC, di mana service perlu memanggil beberapa API eksternal secara bersamaan. Dengan goroutine, saya bisa:
+Mempercepat response time, karena request diproses paralel.
+
+Mengelola concurrency, dengan bantuan channel dan WaitGroup untuk sinkronisasi hasil.
+Membatasi resource, dengan membuat worker pool agar tidak ada goroutine yang berlebihan dan tetap stabil.
+Tujuannya adalah agar aplikasi lebih scalable, efisien, dan mampu menangani banyak request secara bersamaan tanpa blocking.
+
+Contoh case detail
+- Worker Pool (Job Queue)
+Misalnya bikin sistem email sender (notifikasi ke ribuan user). Kalau kirim email satu per satu, lambat.
+Dengan goroutine + channel (worker pool):
+Buat beberapa worker (misalnya 10 goroutine).
+Semua email job masuk ke channel.
+Worker ambil job dan kirim email secara paralel.
+Tujuan: mempercepat batch processing tapi tetap membatasi resource.
+
+No 5
+Jawaban : ada di dalam folder code jobqueue
+
+No 6
+Jawaban :
+Di Go, cara terbaik antar microservices berkomunikasi biasanya
+menggunakan gRPC untuk komunikasi sinkron karena performa lebih baik dibanding REST.
+Sedangkan untuk komunikasi asinkron (misalnya event-driven atau job processing),
+biasanya digunakan message broker seperti RabbitMQ atau Kafka. Dengan kombinasi 
+gRPC + message queue, service bisa efisien, scalable, dan tetap loosely coupled.”
+Dalam microservices berbasis Go, ada beberapa metode komunikasi antar service, tergantung kebutuhan:
+Synchronous Communication (langsung)
+gRPC → metode terbaik di ekosistem Go, karena:
+- Lebih cepat & efisien (pakai HTTP/2 + Protobuf).
+- Strongly-typed (schema jelas, auto-generate client/server).
+- Cocok untuk komunikasi antar service internal.
+- REST API (HTTP/JSON) → lebih universal, bisa dipakai jika butuh integrasi dengan service non-Go.
+- Asynchronous Communication (via message broker / event driven)
+- Message Queue (RabbitMQ, Kafka, NATS, Google Pub/Sub, dll.)
+- Cocok untuk event-driven system.
+- Service bisa publish event, service lain subscribe.
+- Tidak saling bergantung (decoupling).
+- Dipakai saat butuh high throughput, retry mechanism, atau event sourcing.
+
+No 7
+Jawaban : sudah ada di dalam file code grpc
+
+No 8
+Jawaban :
+Dalam Go, error ditangani dengan cara eksplisit, yaitu fungsi biasanya mengembalikan nilai (result, error). Dengan pola ini, kita bisa lebih mudah mengontrol alur program.
+Beberapa cara yang biasa saya lakukan untuk mengatasi error di Go:
+Cek error segera setelah operasi
+contoh codenya :
+
+result, err := someFunc()
+if err != nil {
+    // handle error, misalnya log atau return
+    log.Println("Terjadi error:", err)
+    return
+}
+
+Gunakan errors.Wrap atau fmt.Errorf untuk memberi konteks tambahan
+Supaya tahu di bagian mana error terjadi.
+Centralized error handling di level service atau middleware, agar log lebih konsisten.
+Graceful handling, misalnya jika koneksi DB gagal, aplikasi mencoba reconnect daripada langsung crash.
+
+No 9
+Jawaban :
+
+Ya, saya memiliki pengalaman dalam error logging di Go, terutama saat membangun aplikasi berbasis microservices.
+Beberapa hal yang saya lakukan agar log lebih mudah dikelola:
+Gunakan structured logging
+Saya biasanya memakai library seperti logrus atau zap karena mendukung JSON log.
+JSON format memudahkan integrasi dengan tools monitoring (ELK, Loki, Prometheus).
+
+Contoh codenya -> 
+
+import (
+    "github.com/sirupsen/logrus"
+)
+
+var log = logrus.New()
+
+func main() {
+    log.SetFormatter(&logrus.JSONFormatter{})
+    log.WithFields(logrus.Fields{
+        "service": "inventory-service",
+        "module":  "grpc-client",
+    }).Error("gagal memanggil Account Service")
+}
+
+
+Output JSON:
+
+{
+  "level":"error",
+  "msg":"gagal memanggil Account Service",
+  "service":"inventory-service",
+  "module":"grpc-client",
+  "time":"2025-09-06T16:45:12+07:00"
+}
+
+No 10
+Jawaban : ada di dalam file code kurir
+
+No 11
+Jawaban :
+
+Concurrency (Goroutines, Channels, WaitGroup)
+Kesulitan:
+- Kadang goroutine malah bikin bug sulit dilacak, seperti race condition, deadlock, atau goroutine leak (goroutine tidak pernah berhenti).
+- membutuhkan effort yang lumayan memakan banyak waktu ketika code sudah banyak untuk tracing nya 
+Cara mengatasi:
+- Gunakan sync.WaitGroup dan context.Context untuk mengatur lifecycle goroutine.
+- Aktifkan race detector dengan go run -race saat testing.
+- Biasakan membuat batasan worker pool untuk menghindari kebocoran goroutine.
+
+Error Handling
+Kesulitan:
+Karena Go tidak punya exception, semua error harus ditangani secara eksplisit. Kadang bikin kode jadi panjang atau repetitif.
+Cara mengatasi:
+- Biasakan membuat error wrapping (fmt.Errorf("failed do something: %w", err)).
+- Gunakan package seperti errors untuk trace lebih jelas.
+- Pisahkan error menjadi tipe khusus (custom error) agar mudah di-handle di level service.
+
+
+- Goroutine leak & kebocoran resource
+Masalah: goroutine jalan terus karena channel tak pernah ditutup / context tak dibatalkan.
+Solusi: selalu propagasi context.Context, tutup channel dari produser, gunakan select dgn <-ctx.Done().
+
+- Timeout & retry yang tidak konsisten
+Masalah: request ke DB/HTTP kadang menggantung.
+Solusi: standar-kan timeout di boundary I/O, gunakan circuit breaker / retry with backoff.
+
+- Data race / akses paralel
+Masalah: variabel bersama diakses dari banyak goroutine.
+Solusi: lindungi dengan sync.Mutex, atau ubah desain ke message passing (channel), aktifkan -race saat test.
+
+- GORM (zero value, preload, soft delete)
+Masalah: kolom zero-value tak di-update, preload relasi lupa, soft-delete tak disadari.
+Solusi: pakai Select/Omit/Updates(map), cek gorm.DeletedAt, pakai Preload
+
+
+Coding test 1
+Jawaban : ada di folder coding-test-1
+
+Coding test 2
+Jawaban : ada di folder coding-test-2

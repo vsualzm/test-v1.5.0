@@ -1,0 +1,16 @@
+# 1) Jalankan infra
+docker compose up -d
+
+# 2) Init module (kalau perlu)
+go mod tidy
+
+# 3) Build
+go build -o go-build ./...
+
+# 4) Run (default config)
+./go-build
+
+# Atau override:
+./go-build -n=12 -workers=4 -worker_timeout_s=6 -publish_ms=400
+# atau lewat ENV
+RABBITMQ_URL="amqp://guest:guest@localhost:5672/" REDIS_URL="localhost:6379" ./go-build
